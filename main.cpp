@@ -14,6 +14,10 @@ constexpr size_t cths_hash<int>(const int& i, size_t idx) {
 	return i ^ idx;
 }
 
+bool foo_empty(int) {
+	return false;
+}
+
 bool foo_cths(int i) {
 	return cths<5, int, DATA>(i);
 }
@@ -40,16 +44,23 @@ long gettime() {
 }
 
 void benchmark(bool(*foo)(int), const char s[]) {
+	constexpr size_t times = 1e8;
+	static_assert(times % 4 == 0);
 	long t = gettime();
-	for (int i = 0; i < 1e7; i++)
-		foo(i);
+	for (size_t i = 0; i < times; i += 4) {
+		foo(i + 0);
+		foo(i + 1);
+		foo(i + 2);
+		foo(i + 3);
+	}
 	t = gettime() - t;
-	printf("%gns\t%s\n", t / 1e7, s);
+	printf("%gns\t%s\n", (double)t / times, s);
 }
 
 #define BENCHMARK(foo) benchmark(foo, #foo)
 
 int main() {
+	BENCHMARK(foo_empty);
 	BENCHMARK(foo_cths);
 	BENCHMARK(foo_set);
 	BENCHMARK(foo_uset);
